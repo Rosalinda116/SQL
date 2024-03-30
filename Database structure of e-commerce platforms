@@ -1,0 +1,92 @@
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY,
+    UserName VARCHAR(50),
+    Email VARCHAR(100)
+);
+
+CREATE TABLE Products (
+    ProductID INT PRIMARY KEY,
+    ProductName VARCHAR(100),
+    Price DECIMAL(10, 2)
+);
+
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    UserID INT,
+    OrderDate DATE,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+CREATE TABLE OrderDetails (
+    OrderID INT,
+    ProductID INT,
+    Quantity INT,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+);
+INSERT INTO Users (UserID, UserName, Email) VALUES
+(1, 'Alice', 'alice@example.com'),
+(2, 'Bob', 'bob@example.com');
+
+INSERT INTO Products (ProductID, ProductName, Price) VALUES
+(1, 'Product A', 10.00),
+(2, 'Product B', 20.00),
+(3, 'Product C', 30.00);
+
+INSERT INTO Orders (OrderID, UserID, OrderDate) VALUES
+(1, 1, '2024-03-01'),
+(2, 2, '2024-03-02');
+
+INSERT INTO OrderDetails (OrderID, ProductID, Quantity) VALUES
+(1, 1, 2),
+(1, 2, 1),
+(2, 3, 3);
+SELECT
+    u.UserID,
+    u.UserName,
+    COUNT(o.OrderID) AS TotalOrders,
+    SUM(od.Quantity) AS TotalProducts
+FROM
+    Users u
+LEFT JOIN
+    Orders o ON u.UserID = o.UserID
+LEFT JOIN
+    OrderDetails od ON o.OrderID = od.OrderID
+GROUP BY
+    u.UserID, u.UserName;
+    DELIMITER //
+
+CREATE PROCEDURE CalculateTotalSpent()
+BEGIN
+    DECLARE userId INT;
+    DECLARE totalSpent DECIMAL(10, 2);
+    
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE cur CURSOR FOR SELECT UserID FROM Users;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    OPEN cur;
+    
+    read_loop: LOOP
+        FETCH cur INTO userId;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        SET totalSpent = 0;
+        
+        SELECT SUM(p.Price * od.Quantity)
+        INTO totalSpent
+        FROM Orders o
+        JOIN OrderDetails od ON o.OrderID = od.OrderID
+        JOIN Products p ON od.ProductID = p.ProductID
+        WHERE o.UserID = userId;
+        
+        SELECT CONCAT('User ID: ', userId, ', Total Spent: $', totalSpent);
+    END LOOP;
+    
+    CLOSE cur;
+    
+END //
+
+DELIMITER ;
