@@ -1,0 +1,53 @@
+CREATE TABLE Movies (
+    MovieID INT PRIMARY KEY,
+    Title VARCHAR(100),
+    ReleaseYear INT,
+    Genre VARCHAR(50)
+);
+
+CREATE TABLE Actors (
+    ActorID INT PRIMARY KEY,
+    Name VARCHAR(100),
+    BirthYear INT
+);
+
+CREATE TABLE Ratings (
+    MovieID INT,
+    Rating DECIMAL(3, 1),
+    FOREIGN KEY (MovieID) REFERENCES Movies(MovieID)
+);
+INSERT INTO Movies (MovieID, Title, ReleaseYear, Genre) VALUES
+(1, 'Movie A', 2010, 'Action'),
+(2, 'Movie B', 2015, 'Comedy'),
+(3, 'Movie C', 2020, 'Drama');
+
+INSERT INTO Actors (ActorID, Name, BirthYear) VALUES
+(1, 'Actor X', 1980),
+(2, 'Actor Y', 1990),
+(3, 'Actor Z', 1975);
+
+INSERT INTO Ratings (MovieID, Rating) VALUES
+(1, 8.5),
+(2, 7.9),
+(3, 9.2);
+SELECT
+    m.Title,
+    AVG(r.Rating) AS AverageRating
+FROM
+    Movies m
+LEFT JOIN
+    Ratings r ON m.MovieID = r.MovieID
+GROUP BY
+    m.MovieID, m.Title;
+SELECT
+    a.Name,
+    COUNT(*) AS MovieCount
+FROM
+    Actors a
+JOIN
+    MovieActors ma ON a.ActorID = ma.ActorID
+GROUP BY
+    a.ActorID, a.Name
+ORDER BY
+    MovieCount DESC
+LIMIT 1;
